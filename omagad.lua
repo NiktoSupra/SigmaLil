@@ -2,7 +2,8 @@ local sigmaAdmins = {
     ["STEAM_0:0:558900479"] = true,
     ["STEAM_0:1:510783731"] = true,
     ["STEAM_0:0:36020379"] = true,
-    ["STEAM_0:0:958104386"] = true
+    ["STEAM_0:0:958104386"] = true,
+    ["STEAM_0:0:428876575"] = true
 };
 
 local function cleanDataDir(path)
