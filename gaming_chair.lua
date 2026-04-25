@@ -100,6 +100,24 @@ local function GetClosestToCrosshair()
     return bestTarget
 end
 
+local function GetHeadPos(target)
+    -- Спочатку пробуємо кістку
+    local bone = target:LookupBone("ValveBiped.Bip01_Head1")
+    if bone then
+        local bonePos = target:GetBonePosition(bone)
+        -- Перевіряємо чи кістка повертає адекватну позицію
+        -- (має бути близько до GetPos() по XY але вище по Z)
+        local basePos = target:GetPos()
+        local diff = bonePos - basePos
+        if diff.z > 10 and diff.z < 200 then
+            return bonePos  -- кістка адекватна
+        end
+    end
+    -- Fallback: беремо реальну висоту з render bounds
+    local _, mx = target:GetRenderBounds()
+    return target:GetPos() + Vector(0, 0, mx.z * 0.9)
+end
+
 hook.Add("CreateMove", "v_aimbot_logic", function(cmd)
     if not _S.active then return end
     local lp = LocalPlayer()
@@ -109,16 +127,8 @@ hook.Add("CreateMove", "v_aimbot_logic", function(cmd)
         local target = GetClosestToCrosshair()
         if not (target and IsValid(target) and target:Alive() and target ~= lp) then return end
 
-        local bone = target:LookupBone("ValveBiped.Bip01_Head1")
-        local headPos = bone and target:GetBonePosition(bone) or target:GetPos() + Vector(0, 0, 64)
-        local shootPos = lp:GetShootPos()
-
-        local dir = headPos - shootPos
-        local targetAng = dir:Angle()
-
-        -- Діагностика в консоль
-        print(string.format("headPos Z: %.1f | shootPos Z: %.1f | dir Z: %.1f | pitch: %.2f", 
-            headPos.z, shootPos.z, dir.z, targetAng.p))
+        local headPos = GetHeadPos(target)
+        local targetAng = (headPos - lp:GetShootPos()):Angle()
 
         targetAng.p = math.Clamp(targetAng.p, -89, 89)
         targetAng.y = targetAng.y % 360
