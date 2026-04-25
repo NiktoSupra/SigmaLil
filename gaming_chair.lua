@@ -104,31 +104,25 @@ hook.Add("CreateMove", "v_aimbot_logic", function(cmd)
     if not _S.active then return end
     local lp = LocalPlayer()
     if not IsValid(lp) or not lp:Alive() or not cmd then return end
+
     if input.IsKeyDown(KEY_F) then
         local target = GetClosestToCrosshair()
-        if target and IsValid(target) and target:Alive() and target ~= lp then
-            local bone = target:LookupBone("ValveBiped.Bip01_Head1")
-            local headPos = bone and target:GetBonePosition(bone) or target:GetPos() + Vector(0,0,64)
-            local targetAng = (headPos - lp:GetShootPos()):Angle()
-            targetAng.p = math.Clamp(targetAng.p, -89, 89)
+        if not (target and IsValid(target) and target:Alive() and target ~= lp) then return end
 
-            local cur = cmd:GetViewAngles()
-            cur.p = math.Clamp(cur.p, -89, 89)
+        local bone = target:LookupBone("ValveBiped.Bip01_Head1")
+        local headPos = bone and target:GetBonePosition(bone) or target:GetPos() + Vector(0, 0, 64)
 
-            local pDiff = math.AngleDifference(targetAng.p, cur.p)
-            local yDiff = math.AngleDifference(targetAng.y, cur.y)
+        local targetAng = (headPos - lp:GetShootPos()):Angle()
 
-            local newP = math.Clamp(cur.p + pDiff * _S.smooth, -89, 89)
-            local newY = cur.y + yDiff * _S.smooth
+        -- Просто клампаємо pitch і виставляємо напряму, без жодного smooth
+        targetAng.p = math.Clamp(targetAng.p, -89, 89)
+        targetAng.y = targetAng.y % 360
+        targetAng.r = 0
 
-            cmd:SetViewAngles(Angle(newP, newY % 360, 0))
-        end
+        cmd:SetViewAngles(targetAng)
     end
 end)
 
-hook.Add("ViewPunch", "v_suppress_punch", function()
-    if _S.active then return true end
-end)
 
 hook.Add("HUDPaint", "v_overlay_render", function()
     if not _S.active then return end
