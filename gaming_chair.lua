@@ -109,11 +109,17 @@ hook.Add("CreateMove", "v_aimbot_logic", function(cmd)
             local headPos = bone and target:GetBonePosition(bone) or target:GetPos() + Vector(0,0,64)
             local targetAng = (headPos - lp:GetShootPos()):Angle()
             targetAng.p = math.Clamp(targetAng.p, -89, 89)
-            local curAng = cmd:GetViewAngles()
-            local s = _S.smooth
-            local newP = curAng.p + math.AngleDifference(targetAng.p, curAng.p) * s
-            local newY = curAng.y + math.AngleDifference(targetAng.y, curAng.y) * s
-            cmd:SetViewAngles(Angle(newP, newY, 0))
+
+            local cur = cmd:GetViewAngles()
+            cur.p = math.Clamp(cur.p, -89, 89)
+
+            local pDiff = math.AngleDifference(targetAng.p, cur.p)
+            local yDiff = math.AngleDifference(targetAng.y, cur.y)
+
+            local newP = math.Clamp(cur.p + pDiff * _S.smooth, -89, 89)
+            local newY = cur.y + yDiff * _S.smooth
+
+            cmd:SetViewAngles(Angle(newP, newY % 360, 0))
         end
     end
 end)
