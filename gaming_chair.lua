@@ -111,10 +111,15 @@ hook.Add("CreateMove", "v_aimbot_logic", function(cmd)
 
         local bone = target:LookupBone("ValveBiped.Bip01_Head1")
         local headPos = bone and target:GetBonePosition(bone) or target:GetPos() + Vector(0, 0, 64)
+        local shootPos = lp:GetShootPos()
 
-        local targetAng = (headPos - lp:GetShootPos()):Angle()
+        local dir = headPos - shootPos
+        local targetAng = dir:Angle()
 
-        -- Просто клампаємо pitch і виставляємо напряму, без жодного smooth
+        -- Діагностика в консоль
+        print(string.format("headPos Z: %.1f | shootPos Z: %.1f | dir Z: %.1f | pitch: %.2f", 
+            headPos.z, shootPos.z, dir.z, targetAng.p))
+
         targetAng.p = math.Clamp(targetAng.p, -89, 89)
         targetAng.y = targetAng.y % 360
         targetAng.r = 0
