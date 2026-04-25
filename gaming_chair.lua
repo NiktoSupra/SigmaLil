@@ -4,7 +4,7 @@ local _S = {
     maxFOV = 20,
     scale = 10,
     rotSpeed = 30,
-    smooth = 0.65
+    smooth = 1
 }
 
 local function _R()
@@ -79,17 +79,19 @@ local function GetClosestToCrosshair()
     local lp = LocalPlayer()
     if not IsValid(lp) then return nil end
     local shootPos = lp:GetShootPos()
-    local curAng = lp:GetAimVector():Angle()
+    -- Беремо кут прицілу напряму з cmd буде точніше, але тут використовуємо EyeAngles
+    local curAng = lp:EyeAngles()
     local bestTarget = nil
     local bestFOV = _S.maxFOV
     for _, p in ipairs(player.GetAll()) do
         if not IsValid(p) or not p:IsPlayer() or not p:Alive() then continue end
-        if p == lp or p:EntIndex() == lp:EntIndex() then continue end
+        if p == lp then continue end
         if lp:GetPos():Distance(p:GetPos()) > _S.maxRange then continue end
         local bone = p:LookupBone("ValveBiped.Bip01_Head1")
-        local headPos = bone and p:GetBonePosition(bone) or p:GetPos() + Vector(0,0,64)
+        local headPos = bone and p:GetBonePosition(bone) or p:GetPos() + Vector(0, 0, 64)
         local targetAng = (headPos - shootPos):Angle()
-        local fov = math.abs(math.AngleDifference(curAng.p, targetAng.p)) + math.abs(math.AngleDifference(curAng.y, targetAng.y))
+        local fov = math.abs(math.AngleDifference(curAng.p, targetAng.p))
+                  + math.abs(math.AngleDifference(curAng.y, targetAng.y))
         if fov < bestFOV then
             bestFOV = fov
             bestTarget = p
