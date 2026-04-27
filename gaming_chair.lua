@@ -26,8 +26,13 @@ local function GetRainbowColor(alpha)
 end
 
 local function GetHeadPos(ply)
-    if not IsValid(ply) then return nil end
-    return ply:EyePos() -- стабільніше за кістку голови
+    local boneIndex = ply:LookupBone("ValveBiped.Bip01_Head1")
+    if boneIndex then
+        local bonePos = ply:GetBonePosition(boneIndex)
+        if bonePos then return bonePos end
+    end
+
+    return ply:EyePos()
 end
 
 local function IsVisible(fromPos, toPos, ignoreEnt)
@@ -94,7 +99,7 @@ local function GetClosestTargetToCrosshair()
         if input.IsMouseDown(MOUSE_RIGHT) then
             currentFovRadius = _S.fovRadius * _S.fovAimMultiplier
         end
-
+        
         if screenDist > currentFovRadius then continue end
 
         if screenDist < bestDist then
