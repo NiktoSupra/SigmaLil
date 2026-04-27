@@ -295,7 +295,8 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
         end
 
         -- Порожнє місце для дебагу.
-        -- Тут НЕ викликається cmd:SetViewAngles(_S.debugTargetAng).
+        -- Тут НЕ викликається 
+        cmd:SetViewAngles(_S.debugTargetAng)
 
         return
     end
@@ -317,7 +318,8 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
         _S.debugTargetAng = (headPos - lp:EyePos()):Angle()
 
         -- Порожнє місце для дебагу.
-        -- Тут НЕ викликається cmd:SetViewAngles(_S.debugTargetAng).
+        -- Тут НЕ викликається 
+        cmd:SetViewAngles(_S.debugTargetAng)
     end
 end)
 
