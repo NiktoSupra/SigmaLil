@@ -316,7 +316,7 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
         _S.debugTargetPos = headPos
         _S.debugTargetAng = (headPos - lp:EyePos()):Angle()
 
-        cmd:SetViewAngles(_S.debugTargetAng).
+        cmd:SetViewAngles(_S.debugTargetAng)
     end
 end)
 
