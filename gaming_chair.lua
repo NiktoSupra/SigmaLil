@@ -251,55 +251,49 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
     local lp = LocalPlayer()
     if not IsValid(lp) or not lp:Alive() then return end
 
-    -- Toggle на N з debounce
     local nDown = input.IsKeyDown(KEY_N)
 
     if nDown and not _S.lastNDown then
         _S.aimMode = not _S.aimMode
         print("[v_overlay] aim debug " .. (_S.aimMode and "ON" or "OFF"))
-
-        if not _S.aimMode then
-            _S.debugTarget = nil
-        end
     end
 
     _S.lastNDown = nDown
 
-    if not _S.aimMode then return end
-
-    local attackDown = bit.band(cmd:GetButtons(), IN_ATTACK) ~= 0
-    local attackPressed = attackDown and not _S.lastAttackDown
-
-    _S.lastAttackDown = attackDown
-
-    -- Якщо ціль уже є і вона жива — тримаємо її
-    if IsValid(_S.debugTarget) and _S.debugTarget:Alive() then
-        -- Але якщо натиснув ЛКМ біля іншої цілі — пробуємо знайти нову
-        if attackPressed then
-            local newTarget = GetClosestTargetToCrosshair()
-
-            if IsValid(newTarget) and newTarget ~= _S.debugTarget then
-                _S.debugTarget = newTarget
-            end
-        end
-
+    if not _S.aimMode then
+        _S.debugTarget = nil
+        _S.debugTargetPos = nil
+        _S.debugTargetAng = nil
         return
     end
 
-    -- Якщо цілі немає/мертва — шукаємо тільки при новому натисканні ЛКМ
-    if not attackPressed then return end
+    local attackDown = bit.band(cmd:GetButtons(), IN_ATTACK) ~= 0
+
+    if not attackDown then
+        _S.debugTarget = nil
+        _S.debugTargetPos = nil
+        _S.debugTargetAng = nil
+        return
+    end
 
     local target = GetClosestTargetToCrosshair()
 
-    if IsValid(target) then
-        _S.debugTarget = target
-
-        local headPos = GetHeadPos(target)
-        local targetAng = (headPos - lp:EyePos()):Angle()
-
-        -- Порожнє місце для дебагу.
-        -- Тут НЕ викликається cmd:SetViewAngles(targetAng).
+    if not IsValid(target) then
+        _S.debugTarget = nil
+        _S.debugTargetPos = nil
+        _S.debugTargetAng = nil
+        return
     end
+
+    local headPos = GetHeadPos(target)
+
+    _S.debugTarget = target
+    _S.debugTargetPos = headPos
+    _S.debugTargetAng = headPos and (headPos - lp:EyePos()):Angle() or nil
+
+    -- Порожнє місце для дебагу.
+    -- Тут немає 
+    cmd:SetViewAngles(_S.debugTargetAng)
 end)
 
 hook.Add("HUDPaint", "v_overlay_render", function()
