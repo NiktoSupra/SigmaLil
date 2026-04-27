@@ -255,7 +255,8 @@ end
 local function _F()
     local now = CurTime()
 
-    local killBoost = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 5)
+    local t = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 1.2)
+    local killBoost = t * t * (3 - 2 * t)
 
     local sizeMul = 0.6 + killBoost * 0.4
     local speedMul = 1 + killBoost * 1.0
