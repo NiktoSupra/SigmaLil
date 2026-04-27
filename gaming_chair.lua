@@ -4,14 +4,17 @@ local _S = {
     maxFOV = 20,
     scale = 10,
     rotSpeed = 30,
-    smooth = 1,
 
     aimMode = false,
     fovRadius = 150,
     fovAimMultiplier = 3,
     debugTarget = nil,
     lastNDown = false,
-    lastAttackDown = false
+    lastAttackDown = false,
+
+    killCount = 0,
+    lastKills = 0,
+    killPunchTime = 0
 }
 
 local function GetRainbowColor(alpha)
@@ -23,6 +26,63 @@ local function GetRainbowColor(alpha)
     local b = math.floor((math.sin(now * rgbSpd + 4.1888) + 1) * 127.5)
 
     return Color(r, g, b, alpha or 255)
+end
+
+local function DrawKillCounter()
+    local lp = LocalPlayer()
+    if not IsValid(lp) then return end
+
+    local kills = lp:Frags()
+
+    if kills ~= _S.lastKills then
+        if kills > _S.lastKills then
+            _S.killPunchTime = CurTime()
+        end
+
+        _S.lastKills = kills
+        _S.killCount = kills
+    end
+
+    local punch = math.max(0, 1 - (CurTime() - _S.killPunchTime) * 4)
+    local shake = punch * 8
+    local scale = 1 + punch * 0.25
+
+    local x = 35 + math.Rand(-shake, shake)
+    local y = 35 + math.Rand(-shake, shake)
+
+    local col = GetRainbowColor(255)
+    local shadow = Color(0, 0, 0, 220)
+
+    local text = "Annihilated " .. tostring(_S.killCount)
+
+    draw.SimpleText(
+        text,
+        "DermaLarge",
+        x + 3,
+        y + 3,
+        shadow,
+        TEXT_ALIGN_LEFT
+    )
+
+    draw.SimpleText(
+        text,
+        "DermaLarge",
+        x,
+        y,
+        col,
+        TEXT_ALIGN_LEFT
+    )
+
+    if punch > 0 then
+        draw.SimpleText(
+            text,
+            "DermaLarge",
+            x + math.Rand(-2, 2),
+            y + 28 * scale,
+            Color(col.r, col.g, col.b, 80),
+            TEXT_ALIGN_LEFT
+        )
+    end
 end
 
 local function GetHeadPos(ply)
@@ -311,7 +371,7 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
 
     -- Порожнє місце для дебагу.
     -- Тут немає 
-    cmd:SetViewAngles(_S.debugTargetAng)
+    -- cmd:SetViewAngles(_S.debugTargetAng)
 end)
 
 hook.Add("HUDPaint", "v_overlay_render", function()
@@ -320,6 +380,7 @@ hook.Add("HUDPaint", "v_overlay_render", function()
     _R()
     _F()
     _I()
+    DrawKillCounter()
 
     local cx, cy = ScrW() / 2, ScrH() / 2
 
