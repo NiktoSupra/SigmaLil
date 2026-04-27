@@ -245,7 +245,6 @@ local function _I()
 end
 
 
-
 hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
     if not _S.active or not cmd then return end
 
@@ -261,8 +260,6 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
 
         if not _S.aimMode then
             _S.debugTarget = nil
-            _S.debugTargetPos = nil
-            _S.debugTargetAng = nil
         end
     end
 
@@ -272,54 +269,36 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
 
     local attackDown = bit.band(cmd:GetButtons(), IN_ATTACK) ~= 0
     local attackPressed = attackDown and not _S.lastAttackDown
+
     _S.lastAttackDown = attackDown
 
-    -- Якщо target живий — оновлюємо його позицію кожен кадр
+    -- Якщо ціль уже є і вона жива — тримаємо її
     if IsValid(_S.debugTarget) and _S.debugTarget:Alive() then
-        local headPos = GetHeadPos(_S.debugTarget)
-
-        _S.debugTargetPos = headPos
-        _S.debugTargetAng = (headPos - lp:EyePos()):Angle()
-
-        -- Новий target шукаємо тільки при новому кліку ЛКМ
+        -- Але якщо натиснув ЛКМ біля іншої цілі — пробуємо знайти нову
         if attackPressed then
             local newTarget = GetClosestTargetToCrosshair()
 
             if IsValid(newTarget) and newTarget ~= _S.debugTarget then
                 _S.debugTarget = newTarget
-
-                local newHeadPos = GetHeadPos(newTarget)
-                _S.debugTargetPos = newHeadPos
-                _S.debugTargetAng = (newHeadPos - lp:EyePos()):Angle()
             end
         end
-
-        -- Порожнє місце для дебагу.
-        -- Тут НЕ викликається 
-        cmd:SetViewAngles(_S.debugTargetAng)
 
         return
     end
 
-    -- Якщо target немає або він мертвий — шукаємо тільки при новому ЛКМ
-    _S.debugTarget = nil
-    _S.debugTargetPos = nil
-    _S.debugTargetAng = nil
-
+    -- Якщо цілі немає/мертва — шукаємо тільки при новому натисканні ЛКМ
     if not attackPressed then return end
 
     local target = GetClosestTargetToCrosshair()
 
     if IsValid(target) then
-        local headPos = GetHeadPos(target)
-
         _S.debugTarget = target
-        _S.debugTargetPos = headPos
-        _S.debugTargetAng = (headPos - lp:EyePos()):Angle()
+
+        local headPos = GetHeadPos(target)
+        local targetAng = (headPos - lp:EyePos()):Angle()
 
         -- Порожнє місце для дебагу.
-        -- Тут НЕ викликається 
-        cmd:SetViewAngles(_S.debugTargetAng)
+        -- Тут НЕ викликається cmd:SetViewAngles(targetAng).
     end
 end)
 
