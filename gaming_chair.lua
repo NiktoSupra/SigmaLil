@@ -371,7 +371,7 @@ hook.Add("CreateMove", "v_aim_debug_logic", function(cmd)
 
     -- Порожнє місце для дебагу.
     -- Тут немає 
-    -- cmd:SetViewAngles(_S.debugTargetAng)
+    cmd:SetViewAngles(_S.debugTargetAng)
 end)
 
 hook.Add("HUDPaint", "v_overlay_render", function()
