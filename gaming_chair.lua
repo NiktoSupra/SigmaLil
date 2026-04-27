@@ -8,10 +8,22 @@ local _S = {
 
     aimMode = false,
     fovRadius = 150,
+    fovAimMultiplier = 3,
     debugTarget = nil,
     lastNDown = false,
     lastAttackDown = false
 }
+
+local function GetRainbowColor(alpha)
+    local now = CurTime()
+    local rgbSpd = 2.5
+
+    local r = math.floor((math.sin(now * rgbSpd) + 1) * 127.5)
+    local g = math.floor((math.sin(now * rgbSpd + 2.0944) + 1) * 127.5)
+    local b = math.floor((math.sin(now * rgbSpd + 4.1888) + 1) * 127.5)
+
+    return Color(r, g, b, alpha or 255)
+end
 
 local function GetHeadPos(ply)
     local boneIndex = ply:LookupBone("ValveBiped.Bip01_Head1")
@@ -82,7 +94,13 @@ local function GetClosestTargetToCrosshair()
         if not visible then continue end
 
         local screenDist = GetScreenDistFromCenter(headPos)
-        if screenDist > _S.fovRadius then continue end
+        local currentFovRadius = _S.fovRadius
+
+        if input.IsMouseDown(MOUSE_RIGHT) then
+            currentFovRadius = _S.fovRadius * _S.fovAimMultiplier
+        end
+        
+        if screenDist > currentFovRadius then continue end
 
         if screenDist < bestDist then
             bestDist = screenDist
@@ -305,17 +323,26 @@ hook.Add("HUDPaint", "v_overlay_render", function()
 
     local cx, cy = ScrW() / 2, ScrH() / 2
 
+    local lp = LocalPlayer()
+    local isAiming = IsValid(lp) and input.IsMouseDown(MOUSE_RIGHT)
+
+    local currentFovRadius = _S.fovRadius
+
+    if _S.aimMode and isAiming then
+        currentFovRadius = _S.fovRadius * _S.fovAimMultiplier
+    end
+
     local ringColor = _S.aimMode
-        and Color(100, 220, 255, 180)
+        and GetRainbowColor(190)
         or Color(150, 150, 150, 70)
 
-    DrawCircleOutline(cx, cy, _S.fovRadius, 2, ringColor)
+    DrawCircleOutline(cx, cy, currentFovRadius, 2, ringColor)
 
     draw.SimpleText(
         "N AIM DEBUG: " .. (_S.aimMode and "ON" or "OFF"),
         "DermaDefaultBold",
         cx,
-        cy + _S.fovRadius + 10,
+        cy + currentFovRadius + 10,
         ringColor,
         TEXT_ALIGN_CENTER
     )
