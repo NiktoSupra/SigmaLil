@@ -14,7 +14,8 @@ local _S = {
 
     killCount = 0,
     lastKills = 0,
-    killPunchTime = 0
+    killPunchTime = 0,
+    crosshairAngle = 0
 }
 
 local function GetRainbowColor(alpha)
@@ -255,15 +256,17 @@ end
 local function _F()
     local now = CurTime()
 
-    local t = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 1.2)
+    local t = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 2)
     local killBoost = t * t * (3 - 2 * t)
 
-    local sizeMul = 0.6 + killBoost * 0.4
-    local speedMul = 1 + killBoost * 1.0
+    local sizeMul = 0.5 + killBoost * 0.8
+    local speedMul = 1 + killBoost * 15
 
     local sc = _S.scale * sizeMul * (ScrH() / 1080.0)
     local cx, cy = ScrW() / 2, ScrH() / 2
-    local base_ang = math.rad(now * _S.rotSpeed * speedMul * -1)
+    --local base_ang = math.rad(now * _S.rotSpeed * speedMul * -1)
+    _S.crosshairAngle = (_S.crosshairAngle or 0) - (_S.rotSpeed * speedMul * FrameTime())
+    local base_ang = math.rad(_S.crosshairAngle)
 
     local col = GetRainbowColor(255)
     surface.SetDrawColor(col)
