@@ -254,16 +254,18 @@ end
 
 local function _F()
     local now = CurTime()
-    local sc = _S.scale * (ScrH() / 1080.0)
+
+    local killBoost = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 5)
+
+    local sizeMul = 0.6 + killBoost * 0.4
+    local speedMul = 1 + killBoost * 1.0
+
+    local sc = _S.scale * sizeMul * (ScrH() / 1080.0)
     local cx, cy = ScrW() / 2, ScrH() / 2
-    local base_ang = math.rad(now * _S.rotSpeed * -1)
+    local base_ang = math.rad(now * _S.rotSpeed * speedMul * -1)
 
-    local rgbSpd = 2.5
-    local r = math.floor((math.sin(now * rgbSpd) + 1) * 127.5)
-    local g = math.floor((math.sin(now * rgbSpd + 2.0944) + 1) * 127.5)
-    local b = math.floor((math.sin(now * rgbSpd + 4.1888) + 1) * 127.5)
-
-    surface.SetDrawColor(r, g, b, 255)
+    local col = GetRainbowColor(255)
+    surface.SetDrawColor(col)
 
     local thickOffset = 1
 
