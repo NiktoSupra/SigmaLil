@@ -15,7 +15,12 @@ local _S = {
     killCount = 0,
     lastKills = 0,
     killPunchTime = 0,
-    crosshairAngle = 0
+    crosshairAngle = 0,
+
+    score = 0,
+    lastScoreKills = 0,
+    scorePunchTime = 0,
+    scorePopups = {}
 }
 
 local function GetRainbowColor(alpha)
@@ -29,6 +34,15 @@ local function GetRainbowColor(alpha)
     return Color(r, g, b, alpha or 255)
 end
 
+local function AddScorePopup(amount)
+    table.insert(_S.scorePopups, {
+        amount = amount,
+        start = CurTime(),
+        x = 35 + math.Rand(-4, 4),
+        y = 35 + math.Rand(-3, 3)
+    })
+end
+
 local function DrawKillCounter()
     local lp = LocalPlayer()
     if not IsValid(lp) then return end
@@ -37,52 +51,82 @@ local function DrawKillCounter()
 
     if kills ~= _S.lastKills then
         if kills > _S.lastKills then
+            local diff = kills - _S.lastKills
+
+            for i = 1, diff do
+                local add = 1000 + (_S.killCount * 250)
+                _S.score = (_S.score or 0) + add
+                AddScorePopup(add)
+            end
+
             _S.killPunchTime = CurTime()
+            _S.scorePunchTime = CurTime()
         end
 
         _S.lastKills = kills
         _S.killCount = kills
     end
 
-    local punch = math.max(0, 1 - (CurTime() - _S.killPunchTime) * 4)
-    local shake = punch * 8
-    local scale = 1 + punch * 0.25
+    local now = CurTime()
+    local punch = math.max(0, 1 - (now - _S.killPunchTime) * 4)
+    local scorePunch = math.max(0, 1 - (now - (_S.scorePunchTime or 0)) * 3)
 
+    local shake = punch * 8
     local x = 35 + math.Rand(-shake, shake)
     local y = 35 + math.Rand(-shake, shake)
 
     local col = GetRainbowColor(255)
-    local shadow = Color(0, 0, 0, 220)
+    local shadow = Color(0, 0, 0, 230)
 
-    local text = "Annihilated: " .. tostring(_S.killCount)
+    local killText = "Raped: " .. tostring(_S.killCount)
+    local scoreText = tostring(_S.score or 0) .. " PTS"
 
-    draw.SimpleText(
-        text,
-        "DermaLarge",
-        x + 2,
-        y + 2,
-        shadow,
-        TEXT_ALIGN_LEFT
-    )
+    -- СПОЧАТКУ очки (тепер зверху)
+    local scoreShake = scorePunch * 6
+    local scoreX = 35 + math.Rand(-scoreShake, scoreShake)
 
-    draw.SimpleText(
-        text,
-        "DermaLarge",
-        x,
-        y,
-        col,
-        TEXT_ALIGN_LEFT
-    )
+    draw.SimpleText(scoreText, "DermaLarge", scoreX + 2, y + 2, shadow, TEXT_ALIGN_LEFT)
+    draw.SimpleText(scoreText, "DermaLarge", scoreX, y, GetRainbowColor(235), TEXT_ALIGN_LEFT)
 
-    if punch > 0 then
-        draw.SimpleText(
-            text,
-            "DermaLarge",
-            x + math.Rand(-2, 2),
-            y + 28 * scale,
-            Color(col.r, col.g, col.b, 80),
-            TEXT_ALIGN_LEFT
-        )
+    -- ПОТІМ кiли (нижче)
+    local killY = y + 36
+
+    draw.SimpleText(killText, "DermaLarge", x + 2, killY + 2, shadow, TEXT_ALIGN_LEFT)
+    draw.SimpleText(killText, "DermaLarge", x, killY, col, TEXT_ALIGN_LEFT)
+
+    for i = #_S.scorePopups, 1, -1 do
+        local p = _S.scorePopups[i]
+        local life = now - p.start
+
+        if life > 1.1 then
+            table.remove(_S.scorePopups, i)
+        else
+            local a = math.Clamp(255 * (1 - life / 1.1), 0, 255)
+            local rise = life * 42
+            local side = math.sin(life * 18) * 6
+
+            local txt = "+" .. tostring(p.amount)
+
+            draw.SimpleText(
+                txt,
+                "DermaLarge",
+                p.x + side + 2,
+                p.y - rise + 2,
+                Color(0, 0, 0, a),
+                TEXT_ALIGN_LEFT
+            )
+
+            local rc = GetRainbowColor(a)
+
+            draw.SimpleText(
+                txt,
+                "DermaLarge",
+                p.x + side,
+                p.y - rise,
+                Color(rc.r, rc.g, rc.b, a),
+                TEXT_ALIGN_LEFT
+            )
+        end
     end
 end
 
@@ -174,30 +218,11 @@ end
 
 local function DrawCircleOutline(x, y, radius, thickness, color)
     surface.SetDrawColor(color)
-    draw.NoTexture()
 
-    for i = 0, 360, 2 do
-        local rad1 = math.rad(i)
-        local rad2 = math.rad(i + 2)
+    thickness = thickness or 1
 
-        surface.DrawPoly({
-            {
-                x = x + math.cos(rad1) * (radius - thickness),
-                y = y + math.sin(rad1) * (radius - thickness)
-            },
-            {
-                x = x + math.cos(rad1) * radius,
-                y = y + math.sin(rad1) * radius
-            },
-            {
-                x = x + math.cos(rad2) * radius,
-                y = y + math.sin(rad2) * radius
-            },
-            {
-                x = x + math.cos(rad2) * (radius - thickness),
-                y = y + math.sin(rad2) * (radius - thickness)
-            }
-        })
+    for i = 0, thickness - 1 do
+        surface.DrawCircle(x, y, radius - i, color.r, color.g, color.b, color.a)
     end
 end
 
@@ -260,7 +285,7 @@ local function _F()
     local killBoost = t * t * (3 - 2 * t)
 
     local sizeMul = 0.5 + killBoost * 0.8
-    local speedMul = 1 + killBoost * 15
+    local speedMul = 1 + killBoost * 20
 
     local sc = _S.scale * sizeMul * (ScrH() / 1080.0)
     local cx, cy = ScrW() / 2, ScrH() / 2
@@ -314,22 +339,41 @@ local function _I()
     local _p = LocalPlayer()
     if not IsValid(_p) then return end
 
-    local _str = string.format(
+    local fps = math.Round(1 / math.max(FrameTime(), 0.001))
+
+    local txt = string.format(
         "SYS: %s | NET: %dms | NODES: %d | FRAME: %d",
         _p:Nick(),
         _p:Ping(),
         player.GetCount(),
-        math.Round(1 / FrameTime())
+        fps
     )
 
-    draw.SimpleText(
-        _str,
-        "DermaDefault",
-        ScrW() - 12,
-        ScrH() - 32,
-        Color(180, 220, 255, 200),
-        TEXT_ALIGN_RIGHT
-    )
+    local now = CurTime()
+
+    -- слабкий glitch
+    local lagX = math.sin(now * 6) * 0.2
+    local lagY = math.cos(now * 5) * 0.2
+
+    local x = ScrW() - 20 + lagX
+    local y = 10 + lagY
+
+    local col = GetRainbowColor(255)
+
+    draw.SimpleText(txt, "Trebuchet24", x + 1, y + 1, Color(0, 0, 0, 200), TEXT_ALIGN_RIGHT)
+    draw.SimpleText(txt, "Trebuchet24", x, y, col, TEXT_ALIGN_RIGHT)
+
+    -- дуже легкий дубль
+    if math.random(1, 20) == 1 then
+        draw.SimpleText(
+            txt,
+            "Trebuchet24",
+            x + math.Rand(-1, 1),
+            y,
+            Color(col.r, col.g, col.b, 35),
+            TEXT_ALIGN_RIGHT
+        )
+    end
 end
 
 
@@ -407,35 +451,20 @@ hook.Add("HUDPaint", "v_overlay_render", function()
         and GetRainbowColor(190)
         or Color(150, 150, 150, 70)
 
+    if _S.aimMode then
     DrawCircleOutline(cx, cy, currentFovRadius, 2, ringColor)
 
     draw.SimpleText(
-        "N AIM DEBUG: " .. (_S.aimMode and "ON" or "OFF"),
-        "DermaDefaultBold",
-        cx,
-        cy + currentFovRadius + 10,
-        ringColor,
-        TEXT_ALIGN_CENTER
-    )
-
-    if IsValid(_S.debugTarget) then
-        local headPos = _S.debugTargetPos or GetHeadPos(_S.debugTarget)
-        local screenPos = headPos:ToScreen()
-
-        if screenPos.visible then
-            surface.SetDrawColor(255, 80, 80, 230)
-            surface.DrawLine(cx, cy, screenPos.x, screenPos.y)
-
-            draw.SimpleText(
-                _S.debugTarget:Nick(),
-                "DermaDefaultBold",
-                screenPos.x,
-                screenPos.y - 16,
-                Color(255, 80, 80, 230),
-                TEXT_ALIGN_CENTER
-            )
-        end
+            "Rape Mode: Activated",
+            "DermaDefaultBold",
+            cx,
+            cy + currentFovRadius + 10,
+            ringColor,
+            TEXT_ALIGN_CENTER
+        )
     end
+
+
 end)
 
 
@@ -452,18 +481,6 @@ hook.Add("Think", "debug_modify_swep_recoil", function()
 
     if not wep.Primary then return end
     if not string.StartWith(wep:GetClass(), "m9k") then return end
-
-
-    -- Змінюємо recoil значення
-    wep.Primary.KickUp = 0
-    wep.Primary.KickDown = 0
-    wep.Primary.KickHorizontal = 0
-
-    //wep:SetNWBool("M9K_Ironsights", true)
-
-
-    //wep.SetIronsights(true, lp)
-    //print(wep.Ironsights)
 end)
 
 
