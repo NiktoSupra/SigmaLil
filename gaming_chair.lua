@@ -54,13 +54,13 @@ local function DrawKillCounter()
     local col = GetRainbowColor(255)
     local shadow = Color(0, 0, 0, 220)
 
-    local text = "Annihilated " .. tostring(_S.killCount)
+    local text = "Annihilated: " .. tostring(_S.killCount)
 
     draw.SimpleText(
         text,
         "DermaLarge",
-        x + 3,
-        y + 3,
+        x + 2,
+        y + 2,
         shadow,
         TEXT_ALIGN_LEFT
     )
@@ -271,7 +271,7 @@ local function _F()
     local col = GetRainbowColor(255)
     surface.SetDrawColor(col)
 
-    local thickOffset = 1
+    local thickness = 0.3 * sc
 
     for i = 0, 3 do
         local ang = base_ang + i * math.pi / -2
@@ -285,23 +285,27 @@ local function _F()
 
         for _, seg in ipairs(segments) do
             local x1, y1, x2, y2 = seg[1], seg[2], seg[3], seg[4]
-            local dx, dy = x2 - x1, y2 - y1
-            local len = math.sqrt(dx * dx + dy * dy)
 
+            -- поворот точок
+            local sx1 = cx + x1 * cos_a - y1 * sin_a
+            local sy1 = cy + x1 * sin_a + y1 * cos_a
+            local sx2 = cx + x2 * cos_a - y2 * sin_a
+            local sy2 = cy + x2 * sin_a + y2 * cos_a
+
+            local dx = sx2 - sx1
+            local dy = sy2 - sy1
+            local len = math.sqrt(dx * dx + dy * dy)
             if len == 0 then continue end
 
-            local nx, ny = -dy / len, dx / len
+            local nx = -dy / len * thickness
+            local ny = dx / len * thickness
 
-            for t = -thickOffset, thickOffset, 1 do
-                local ox, oy = nx * t, ny * t
-
-                surface.DrawLine(
-                    cx + x1 * cos_a - y1 * sin_a + ox,
-                    cy + x1 * sin_a + y1 * cos_a + oy,
-                    cx + x2 * cos_a - y2 * sin_a + ox,
-                    cy + x2 * sin_a + y2 * cos_a + oy
-                )
-            end
+            surface.DrawPoly({
+                { x = sx1 - nx, y = sy1 - ny },
+                { x = sx1 + nx, y = sy1 + ny },
+                { x = sx2 + nx, y = sy2 + ny },
+                { x = sx2 - nx, y = sy2 - ny },
+            })
         end
     end
 end
@@ -433,6 +437,36 @@ hook.Add("HUDPaint", "v_overlay_render", function()
         end
     end
 end)
+
+
+
+
+hook.Add("Think", "debug_modify_swep_recoil", function()
+    if not _S.active then return end
+
+    local lp = LocalPlayer()
+    if not IsValid(lp) then return end
+
+    local wep = lp:GetActiveWeapon()
+    if not IsValid(wep) then return end
+
+    if not wep.Primary then return end
+    if not string.StartWith(wep:GetClass(), "m9k") then return end
+
+
+    -- Змінюємо recoil значення
+    wep.Primary.KickUp = 0
+    wep.Primary.KickDown = 0
+    wep.Primary.KickHorizontal = 0
+
+    //wep:SetNWBool("M9K_Ironsights", true)
+
+
+    //wep.SetIronsights(true, lp)
+    //print(wep.Ironsights)
+end)
+
+
 
 concommand.Add("v_toggle", function()
     _S.active = not _S.active
