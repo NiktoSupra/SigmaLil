@@ -279,6 +279,7 @@ local function _R()
 end
 
 local function _F()
+    /*
     local now = CurTime()
 
     local t = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 2)
@@ -297,7 +298,28 @@ local function _F()
     surface.SetDrawColor(col)
 
     local thickness = 0.3 * sc
+    */
+    
+    local now = CurTime()
 
+    local t = math.max(0, 1 - (now - (_S.killPunchTime or 0)) * 2)
+    local killBoost = t * t * (3 - 2 * t)
+
+    -- завжди мінімум 60%, після кілу максимум 100%
+    local sizeMul = 0.6 + killBoost * 0.4
+    local speedMul = 1 + killBoost * 4
+
+    local sc = math.max(1, _S.scale * sizeMul * (ScrH() / 1080.0))
+    local cx, cy = ScrW() / 2, ScrH() / 2
+
+    _S.crosshairAngle = (_S.crosshairAngle or 0) - (_S.rotSpeed * speedMul * FrameTime())
+    local base_ang = math.rad(_S.crosshairAngle)
+
+    local col = GetRainbowColor(255)
+    surface.SetDrawColor(col)
+
+    local thickness = math.max(1.2, 0.28 * sc)
+    
     for i = 0, 3 do
         local ang = base_ang + i * math.pi / -2
         local cos_a = math.cos(ang)
